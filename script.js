@@ -1,3 +1,4 @@
+// ===== 取得 DOM 元素 =====
 const form = document.getElementById("transaction-form");
 const typeInput = document.getElementById("type");
 const descriptionInput = document.getElementById("description");
@@ -9,9 +10,13 @@ const totalIncomeEl = document.getElementById("total-income");
 const totalExpenseEl = document.getElementById("total-expense");
 const balanceEl = document.getElementById("balance");
 
+// Firestore collection 名稱
 const COLLECTION_NAME = "transactions";
+
+// 暫存在記憶體的資料
 let transactions = [];
 
+// ===== 工具函式 =====
 function formatCurrency(value) {
   return Number(value).toLocaleString(undefined, {
     minimumFractionDigits: 2,
@@ -19,6 +24,7 @@ function formatCurrency(value) {
   });
 }
 
+// ===== Firestore 讀寫 =====
 async function loadTransactions() {
   try {
     const snapshot = await db
@@ -60,6 +66,7 @@ async function deleteTransactionFromDb(id) {
   }
 }
 
+// ===== 畫面渲染 =====
 function renderSummary() {
   const income = transactions
     .filter(t => t.type === "income")
@@ -113,6 +120,7 @@ function renderTable() {
   });
 }
 
+// ===== 刪除流程 =====
 async function handleDelete(id) {
   const ok = confirm("確定要刪除此紀錄嗎？");
   if (!ok) return;
@@ -122,9 +130,12 @@ async function handleDelete(id) {
     transactions = transactions.filter(t => t.id !== id);
     renderSummary();
     renderTable();
-  } catch (error) {}
+  } catch (error) {
+    // 上面已經有 alert
+  }
 }
 
+// ===== 表單送出（新增） =====
 form.addEventListener("submit", async event => {
   event.preventDefault();
 
@@ -154,9 +165,12 @@ form.addEventListener("submit", async event => {
     form.reset();
     typeInput.value = "expense";
     dateInput.valueAsDate = new Date();
-  } catch (error) {}
+  } catch (error) {
+    // 上面已經有 alert
+  }
 });
 
+// ===== 初始化 =====
 window.addEventListener("DOMContentLoaded", () => {
   dateInput.valueAsDate = new Date();
   loadTransactions();
