@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>My Expense Tracker</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+    <h1>Expense Tracker</h1>
+
+    <section class="summary">
+      <div class="card">
+        <span>Total Income</span>
+        <strong id="total-income">0</strong>
+      </div>
+      <div class="card">
+        <span>Total Expense</span>
+        <strong id="total-expense">0</strong>
+      </div>
+      <div class="card">
+        <span>Balance</span>
+        <strong id="balance">0</strong>
+      </div>
+    </section>
+
+    <section class="form-section">
+      <h2>Add Transaction</h2>
+      <form id="transaction-form">
+        <select id="type" required>
+          <option value="income">Income</option>
+          <option value="expense">Expense</option>
+        </select>
+
+        <input
+          type="text"
+          id="description"
+          placeholder="Description (e.g. Lunch)"
+          required
+        />
+
+        <input
+          type="number"
+          id="amount"
+          placeholder="Amount"
+          step="0.01"
+          min="0"
+          required
+        />
+
+        <input
+          type="date"
+          id="date"
+          required
+        />
+
+        <button type="submit">Add</button>
+      </form>
+    </section>
+
+    <section class="list-section">
+      <h2>Transactions</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Description</th>
+            <th>Type</th>
+            <th>Amount</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="transaction-body">
+          <!-- Rows go here -->
+        </tbody>
+      </table>
+    </section>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
