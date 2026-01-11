@@ -1,4 +1,3 @@
-// ---- DOM 元素 ----
 const form = document.getElementById("transaction-form");
 const typeInput = document.getElementById("type");
 const descriptionInput = document.getElementById("description");
@@ -10,13 +9,9 @@ const totalIncomeEl = document.getElementById("total-income");
 const totalExpenseEl = document.getElementById("total-expense");
 const balanceEl = document.getElementById("balance");
 
-// Firestore collection 名稱，可以改成你喜歡的
 const COLLECTION_NAME = "transactions";
-
-// 放在記憶體裡用來渲染畫面的陣列
 let transactions = [];
 
-// ---- 工具函式 ----
 function formatCurrency(value) {
   return Number(value).toLocaleString(undefined, {
     minimumFractionDigits: 2,
@@ -24,16 +19,12 @@ function formatCurrency(value) {
   });
 }
 
-// ---- Firestore 讀寫 ----
-
-// 從 Firestore 把全部交易資料讀出來
 async function loadTransactions() {
   try {
-    // 以日期排序顯示，如果你用字串 yyyy-mm-dd 儲存，orderBy("date") 可以用
     const snapshot = await db
       .collection(COLLECTION_NAME)
       .orderBy("date", "asc")
-      .get(); // [web:107][web:117][web:113]
+      .get();
 
     transactions = snapshot.docs.map(doc => ({
       id: doc.id,
@@ -48,10 +39,9 @@ async function loadTransactions() {
   }
 }
 
-// 新增一筆交易到 Firestore
 async function addTransactionToDb(tx) {
   try {
-    const docRef = await db.collection(COLLECTION_NAME).add(tx); // [web:117]
+    const docRef = await db.collection(COLLECTION_NAME).add(tx);
     return docRef.id;
   } catch (error) {
     console.error("Failed to add transaction:", error);
@@ -60,5 +50,114 @@ async function addTransactionToDb(tx) {
   }
 }
 
-// 從 Firestore 刪除一筆交易
-async func
+async function deleteTransactionFromDb(id) {
+  try {
+    await db.collection(COLLECTION_NAME).doc(id).delete();
+  } catch (error) {
+    console.error("Failed to delete transaction:", error);
+    alert("刪除資料時發生錯誤，請稍後再試。");
+    throw error;
+  }
+}
+
+function renderSummary() {
+  const income = transactions
+    .filter(t => t.type === "income")
+    .reduce((sum, t) => sum + Number(t.amount), 0);
+
+  const expense = transactions
+    .filter(t => t.type === "expense")
+    .reduce((sum, t) => sum + Number(t.amount), 0);
+
+  const balance = income - expense;
+
+  totalIncomeEl.textContent = formatCurrency(income);
+  totalExpenseEl.textContent = formatCurrency(expense);
+  balanceEl.textContent = formatCurrency(balance);
+}
+
+function renderTable() {
+  tbody.innerHTML = "";
+
+  transactions.forEach(tx => {
+    const tr = document.createElement("tr");
+
+    const dateTd = document.createElement("td");
+    dateTd.textContent = tx.date;
+
+    const descTd = document.createElement("td");
+    descTd.textContent = tx.description;
+
+    const typeTd = document.createElement("td");
+    typeTd.textContent = tx.type;
+
+    const amountTd = document.createElement("td");
+    amountTd.textContent = formatCurrency(tx.amount);
+    amountTd.className =
+      tx.type === "income" ? "amount-income" : "amount-expense";
+
+    const actionsTd = document.createElement("td");
+    const btn = document.createElement("button");
+    btn.textContent = "Delete";
+    btn.className = "delete-btn";
+    btn.addEventListener("click", () => handleDelete(tx.id));
+    actionsTd.appendChild(btn);
+
+    tr.appendChild(dateTd);
+    tr.appendChild(descTd);
+    tr.appendChild(typeTd);
+    tr.appendChild(amountTd);
+    tr.appendChild(actionsTd);
+
+    tbody.appendChild(tr);
+  });
+}
+
+async function handleDelete(id) {
+  const ok = confirm("確定要刪除此紀錄嗎？");
+  if (!ok) return;
+
+  try {
+    await deleteTransactionFromDb(id);
+    transactions = transactions.filter(t => t.id !== id);
+    renderSummary();
+    renderTable();
+  } catch (error) {}
+}
+
+form.addEventListener("submit", async event => {
+  event.preventDefault();
+
+  const type = typeInput.value;
+  const description = descriptionInput.value.trim();
+  const amount = parseFloat(amountInput.value);
+  const date = dateInput.value;
+
+  if (!description || isNaN(amount) || !date) {
+    alert("Please fill in all fields.");
+    return;
+  }
+
+  const newTx = {
+    type,
+    description,
+    amount,
+    date
+  };
+
+  try {
+    const newId = await addTransactionToDb(newTx);
+    transactions.push({ id: newId, ...newTx });
+    renderSummary();
+    renderTable();
+
+    form.reset();
+    typeInput.value = "expense";
+    dateInput.valueAsDate = new Date();
+  } catch (error) {}
+});
+
+window.addEventListener("DOMContentLoaded", () => {
+  dateInput.valueAsDate = new Date();
+  loadTransactions();
+});
